@@ -1,35 +1,56 @@
--- Muscle Legends - Script Completo com GUI
--- Baseado no script "KING SUPREMACY" (adaptado)
+--[[
+=========================================================
+                    CLAN CLZ
+                  Criador: MITO
+=========================================================
+Muscle Legends - Script Completo com GUI
+--]]
 
 if game.PlaceId ~= 155615604 then 
     return 
 end
 
-local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/2581235867/21/refs/heads/main/By%20Tokattk"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/MITORYAN/scriptmusclelegendstest1/main/main.lua"))()
+
 local Window = redzlib:MakeWindow({
-    Title = "Muscle Legends - Auto Farm",
-    SubTitle = "Auto Força | OP Edition",
-    SaveFolder = "MLAutoFarmConfig"
+    Title = "CLAN CLZ",
+    SubTitle = "Criador: MITO | Muscle Legends",
+    SaveFolder = "CLANCLZConfig"
 })
 
 local LP = game:GetService("Players").LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
-local MuscleEvent = LP:FindFirstChild("MuscleEvent") or LP.Character:FindFirstChild("MuscleEvent")
 
--- Aba Principal
-local MainTab = Window:MakeTab({"⚡ Auto Farm", "home"})
+local MuscleEvent = LP:FindFirstChild("MuscleEvent") 
+    or (LP.Character and LP.Character:FindFirstChild("MuscleEvent"))
+
+if not MuscleEvent then
+    warn("[CLAN CLZ] MuscleEvent não encontrado.")
+    return
+end
+
+-- =========================================================
+-- ABA PRINCIPAL
+-- =========================================================
+
+local MainTab = Window:MakeTab({
+    {"⚡ Auto Farm", "home"}
+})
 
 MainTab:AddToggle({
     Name = "Auto Força (Ultra Fast Rep)",
     Default = false,
+
     Callback = function(Value)
         _G.FastRep = Value
+
         task.spawn(function()
             while _G.FastRep do
                 pcall(function()
                     MuscleEvent:FireServer("punch", "leftHand")
                     MuscleEvent:FireServer("punch", "rightHand")
                 end)
+
                 task.wait(0.0001)
             end
         end)
@@ -39,63 +60,113 @@ MainTab:AddToggle({
 MainTab:AddToggle({
     Name = "Auto Rebirth",
     Default = false,
+
     Callback = function(Value)
         _G.Rebirth = Value
+
         task.spawn(function()
             while _G.Rebirth do
-                RS.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
+                pcall(function()
+                    RS.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
+                end)
+
                 task.wait(5)
             end
         end)
     end
 })
 
--- Aba de Combate
-local CombatTab = Window:MakeTab({"⚔️ Combate", "swords"})
+-- =========================================================
+-- ABA DE COMBATE
+-- =========================================================
+
+local CombatTab = Window:MakeTab({
+    {"⚔️ Combate", "swords"}
+})
 
 CombatTab:AddToggle({
     Name = "Kill Aura (Raio 25)",
     Default = false,
+
     Callback = function(Value)
         _G.KillAura = Value
+
         task.spawn(function()
             while _G.KillAura do
+
                 for _, v in pairs(game.Players:GetPlayers()) do
-                    if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (LP.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+
+                    if v ~= LP 
+                    and v.Character 
+                    and v.Character:FindFirstChild("HumanoidRootPart")
+                    and LP.Character
+                    and LP.Character:FindFirstChild("HumanoidRootPart") then
+
+                        local dist =
+                            (LP.Character.HumanoidRootPart.Position
+                            - v.Character.HumanoidRootPart.Position).Magnitude
+
                         if dist < 25 then
-                            MuscleEvent:FireServer("punch", "leftHand")
-                            MuscleEvent:FireServer("punch", "rightHand")
+                            pcall(function()
+                                MuscleEvent:FireServer("punch", "leftHand")
+                                MuscleEvent:FireServer("punch", "rightHand")
+                            end)
                         end
                     end
                 end
+
                 task.wait(0.1)
             end
         end)
     end
 })
 
--- Aba de Segurança
-local StealthTab = Window:MakeTab({"🛡️ Segurança", "shield"})
+-- =========================================================
+-- ABA DE SEGURANÇA
+-- =========================================================
+
+local StealthTab = Window:MakeTab({
+    {"🛡️ Segurança", "shield"}
+})
 
 StealthTab:AddToggle({
-    Name = "Sky Farm (Anti-Report)",
+    Name = "Sky Farm",
     Default = false,
+
     Callback = function(Value)
         _G.SkyFarm = Value
+
         task.spawn(function()
             while _G.SkyFarm do
+
                 pcall(function()
-                    LP.Character.HumanoidRootPart.CFrame = CFrame.new(
-                        LP.Character.HumanoidRootPart.Position.X, 
-                        5000, 
-                        LP.Character.HumanoidRootPart.Position.Z
-                    )
+                    if LP.Character
+                    and LP.Character:FindFirstChild("HumanoidRootPart") then
+
+                        local Root = LP.Character.HumanoidRootPart
+                        local Position = Root.Position
+
+                        Root.CFrame = CFrame.new(
+                            Position.X,
+                            5000,
+                            Position.Z
+                        )
+                    end
                 end)
+
                 task.wait(1)
             end
         end)
     end
 })
 
-print("[ML Auto Farm] Script carregado com sucesso!")
+-- =========================================================
+-- INFORMAÇÕES
+-- =========================================================
+
+print("==========================================")
+print("              CLAN CLZ")
+print("            Criador: MITO")
+print("==========================================")
+print("Muscle Legends Hub carregado!")
+print("==========================================")
