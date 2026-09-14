@@ -1,50 +1,77 @@
 --[[
-    ██████╗██╗      █████╗ ███╗   ██╗     ██████╗██╗     ███████╗
-   ██╔════╝██║     ██╔══██╗████╗  ██║    ██╔════╝██║     ╚══███╔╝
-   ██║     ██║     ███████║██╔██╗ ██║    ██║     ██║       ███╔╝ 
-   ██║     ██║     ██╔══██║██║╚██╗██║    ██║     ██║      ███╔╝  
-   ╚██████╗███████╗██║  ██║██║ ╚████║    ╚██████╗███████╗███████╗
-    ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝     ╚═════╝╚══════╝╚══════╝
-                    Clan CLZ Script | By: MITO
-                    Jogo: Muscle Legends
-                    Executor: Xeno (compatível com Delta/Wave/Solara)
+    Clan CLZ Script | By: MITO - v2 (auto-detect remotes)
+    Corrigido: encontra MuscleEvent / RebirthRemote automaticamente
 ]]
 
--- ==== SERVIÇOS ====
 local Players = game:GetService("Players")
 local RS      = game:GetService("ReplicatedStorage")
 local UIS     = game:GetService("UserInputService")
 local VUser   = game:GetService("VirtualUser")
 local LP      = Players.LocalPlayer
 
--- ==== PERSONAGEM ====
 repeat task.wait() until LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
 local Char = LP.Character
 local HRP  = Char:WaitForChild("HumanoidRootPart")
 local Hum  = Char:WaitForChild("Humanoid")
 
--- ==== EVENTO DE MÚSCULO ====
-local MuscleEvent = LP:FindFirstChild("MuscleEvent")
-    or Char:FindFirstChild("MuscleEvent")
+-- =====================================================
+-- AUTO-DETECT REMOTES
+-- =====================================================
+local function findRemote(keywords)
+    local places = {
+        LP,
+        LP.Character,
+        RS,
+        RS:FindFirstChild("rEvents"),
+    }
+    for _, c in ipairs(places) do
+        if c then
+            for _, v in ipairs(c:GetDescendants()) do
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    local n = v.Name:lower()
+                    for _, kw in ipairs(keywords) do
+                        if n:find(kw) then
+                            return v
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
 
--- ==== ESTADOS ====
+local MuscleEvent  = findRemote({"muscle", "punch", "hit", "attack", "remote"})
+local RebirthRemote = findRemote({"rebirth"})
+
+print("✅ MuscleEvent encontrado em:", MuscleEvent and MuscleEvent:GetFullName() or "NÃO ENCONTRADO")
+print("✅ RebirthRemote encontrado em:", RebirthRemote and RebirthRemote:GetFullName() or "NÃO ENCONTRADO")
+
+-- Se não achou nada, para aqui
+if not MuscleEvent then
+    warn("⚠️ Nenhum remote de soco encontrado! Rode o diagnóstico.")
+end
+
+-- =====================================================
+-- ESTADOS
+-- =====================================================
 local S = {
-    AutoSoco     = false,
-    AutoFlexao   = false,
-    AutoPeso     = false,
-    AutoRebirth  = false,
-    AutoComprar  = false,
-    AutoColetar  = false,
-    KillAura     = false,
-    AntiAFK      = false,
-    SkyFarm      = false,
-    ESP          = false,
-    Speed        = false,
-    Teleport     = false,
+    AutoSoco    = false,
+    AutoFlexao  = false,
+    AutoPeso    = false,
+    AutoRebirth = false,
+    AutoComprar = false,
+    AutoColetar = false,
+    KillAura    = false,
+    AntiAFK     = false,
+    SkyFarm     = false,
+    ESP         = false,
+    Speed       = false,
+    Teleport    = false,
 }
 
 -- =====================================================
---  GUI
+-- GUI
 -- =====================================================
 local gui = Instance.new("ScreenGui")
 gui.Name = "ClanCLZScript"
@@ -53,7 +80,7 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = LP:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 270, 0, 420)
+main.Size = UDim2.new(0, 270, 0, 440)
 main.Position = UDim2.new(0.02, 0, 0.15, 0)
 main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 main.BorderSizePixel = 0
@@ -66,7 +93,6 @@ stroke.Color = Color3.fromRGB(180, 30, 30)
 stroke.Thickness = 1.5
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- barra topo
 local top = Instance.new("Frame")
 top.Size = UDim2.new(1, 0, 0, 36)
 top.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
@@ -116,7 +142,6 @@ close.BorderSizePixel = 0
 close.Parent = top
 Instance.new("UICorner", close).CornerRadius = UDim.new(0, 5)
 
--- rodapé
 local footer = Instance.new("TextLabel")
 footer.Size = UDim2.new(1, 0, 0, 20)
 footer.Position = UDim2.new(0, 0, 1, -22)
@@ -127,7 +152,6 @@ footer.Font = Enum.Font.Gotham
 footer.TextSize = 11
 footer.Parent = main
 
--- scroll
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, -16, 1, -80)
 scroll.Position = UDim2.new(0, 8, 0, 44)
@@ -144,7 +168,6 @@ list.Padding = UDim.new(0, 6)
 list.SortOrder = Enum.SortOrder.LayoutOrder
 list.Parent = scroll
 
--- criar toggle
 local function makeToggle(name, key, onChange)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -6, 0, 34)
@@ -154,11 +177,9 @@ local function makeToggle(name, key, onChange)
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.Gotham
     btn.TextSize = 12
-    btn.AutoButtonColor = true
     btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.Parent = scroll
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
     local pad = Instance.new("UIPadding", btn)
     pad.PaddingLeft = UDim.new(0, 10)
 
@@ -171,7 +192,7 @@ local function makeToggle(name, key, onChange)
     end)
 end
 
--- drag da janela
+-- drag
 local dragging, dragStart, startPos
 top.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -184,11 +205,9 @@ end)
 UIS.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
     or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        main.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
+        local d = input.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X,
+                                  startPos.Y.Scale, startPos.Y.Offset + d.Y)
     end
 end)
 UIS.InputEnded:Connect(function(input)
@@ -201,16 +220,14 @@ end)
 minimize.MouseButton1Click:Connect(function()
     scroll.Visible = not scroll.Visible
     footer.Visible = not footer.Visible
-    main.Size = scroll.Visible and UDim2.new(0, 270, 0, 420)
+    main.Size = scroll.Visible and UDim2.new(0, 270, 0, 440)
                             or UDim2.new(0, 270, 0, 36)
 end)
 
-close.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
+close.MouseButton1Click:Connect(function() gui:Destroy() end)
 
 -- =====================================================
---  TOGGLES
+-- TOGGLES
 -- =====================================================
 makeToggle("🥊 Auto Soco (Força)",       "AutoSoco")
 makeToggle("💪 Auto Flexão",             "AutoFlexao")
@@ -228,18 +245,22 @@ end)
 makeToggle("🌀 Teleport (segue mouse)","Teleport")
 
 -- =====================================================
---  LOOPS
+-- FUNÇÕES
 -- =====================================================
+
+-- Função universal de soco: tenta VÁRIOS formatos diferentes
+local function tryPunch()
+    if not MuscleEvent then return end
+    pcall(function() MuscleEvent:FireServer("punch", "leftHand") end)
+    pcall(function() MuscleEvent:FireServer("punch", "rightHand") end)
+    pcall(function() MuscleEvent:FireServer("punch") end)
+    pcall(function() MuscleEvent:FireServer() end)
+end
 
 -- AUTO SOCO
 task.spawn(function()
-    while task.wait(0.0001) do
-        if S.AutoSoco and MuscleEvent then
-            pcall(function()
-                MuscleEvent:FireServer("punch", "leftHand")
-                MuscleEvent:FireServer("punch", "rightHand")
-            end)
-        end
+    while task.wait() do
+        if S.AutoSoco then tryPunch() end
     end
 end)
 
@@ -251,25 +272,22 @@ task.spawn(function()
                 MuscleEvent:FireServer("flex")
                 MuscleEvent:FireServer("situps")
                 MuscleEvent:FireServer("pushups")
+                MuscleEvent:FireServer("squats")
             end)
         end
     end
 end)
 
--- AUTO PESO (usa ProximityPrompts próximos)
+-- AUTO PESO
 task.spawn(function()
-    while task.wait(0.5) do
+    while task.wait(0.3) do
         if S.AutoPeso then
             pcall(function()
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("ProximityPrompt") and v.Enabled then
-                        local obj = v.Parent
-                        if obj and obj:IsA("BasePart") then
-                            local d = (HRP.Position - obj.Position).Magnitude
-                            if d < 30 then
-                                fireproximityprompt(v)
-                            end
-                        end
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") and v.Enabled and v.Parent
+                    and v.Parent:IsA("BasePart") then
+                        local d = (HRP.Position - v.Parent.Position).Magnitude
+                        if d < 30 then fireproximityprompt(v) end
                     end
                 end
             end)
@@ -280,33 +298,30 @@ end)
 -- AUTO REBIRTH
 task.spawn(function()
     while task.wait(3) do
-        if S.AutoRebirth then
+        if S.AutoRebirth and RebirthRemote then
             pcall(function()
-                local rEvents = RS:FindFirstChild("rEvents")
-                if rEvents and rEvents:FindFirstChild("rebirthRemote") then
-                    rEvents.rebirthRemote:InvokeServer("rebirthRequest")
+                if RebirthRemote:IsA("RemoteFunction") then
+                    RebirthRemote:InvokeServer("rebirthRequest")
+                else
+                    RebirthRemote:FireServer("rebirthRequest")
                 end
             end)
         end
     end
 end)
 
--- AUTO COMPRAR (ProximityPrompts com nome de buy/shop)
+-- AUTO COMPRAR
 task.spawn(function()
     while task.wait(1) do
         if S.AutoComprar then
             pcall(function()
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("ProximityPrompt") and v.Enabled then
-                        local obj = v.Parent
-                        local n   = (obj and obj.Name or ""):lower()
-                        local a   = v.ActionText:lower()
-                        if n:find("buy") or n:find("shop")
-                        or a:find("buy") or a:find("comprar") then
-                            if obj and obj:IsA("BasePart") then
-                                local d = (HRP.Position - obj.Position).Magnitude
-                                if d < 30 then fireproximityprompt(v) end
-                            end
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") and v.Enabled and v.Parent
+                    and v.Parent:IsA("BasePart") then
+                        local n = (v.Parent.Name .. v.ActionText):lower()
+                        if n:find("buy") or n:find("shop") or n:find("comprar") then
+                            local d = (HRP.Position - v.Parent.Position).Magnitude
+                            if d < 30 then fireproximityprompt(v) end
                         end
                     end
                 end
@@ -315,17 +330,16 @@ task.spawn(function()
     end
 end)
 
--- AUTO COLETAR (toca em itens do chão)
+-- AUTO COLETAR
 task.spawn(function()
     while task.wait(0.3) do
         if S.AutoColetar then
             pcall(function()
-                for _, v in pairs(workspace:GetDescendants()) do
+                for _, v in ipairs(workspace:GetDescendants()) do
                     if v:IsA("BasePart") and v.CanTouch then
                         local n = v.Name:lower()
                         if n:find("coin") or n:find("cash")
-                        or n:find("gem")  or n:find("drop")
-                        or n:find("pickup") then
+                        or n:find("gem")  or n:find("drop") then
                             local d = (HRP.Position - v.Position).Magnitude
                             if d < 20 then
                                 firetouchinterest(HRP, v, 0)
@@ -342,21 +356,15 @@ end)
 -- KILL AURA
 task.spawn(function()
     while task.wait(0.05) do
-        if S.KillAura and MuscleEvent then
-            pcall(function()
-                for _, p in pairs(Players:GetPlayers()) do
-                    if p ~= LP and p.Character then
-                        local tHRP = p.Character:FindFirstChild("HumanoidRootPart")
-                        if tHRP then
-                            local d = (HRP.Position - tHRP.Position).Magnitude
-                            if d < 25 then
-                                MuscleEvent:FireServer("punch", "leftHand")
-                                MuscleEvent:FireServer("punch", "rightHand")
-                            end
-                        end
+        if S.KillAura then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LP and p.Character then
+                    local tH = p.Character:FindFirstChild("HumanoidRootPart")
+                    if tH and (HRP.Position - tH.Position).Magnitude < 25 then
+                        tryPunch()
                     end
                 end
-            end)
+            end
         end
     end
 end)
@@ -373,9 +381,7 @@ end)
 task.spawn(function()
     while task.wait(1) do
         if S.SkyFarm and HRP then
-            pcall(function()
-                HRP.CFrame = CFrame.new(HRP.Position.X, 5000, HRP.Position.Z)
-            end)
+            pcall(function() HRP.CFrame = CFrame.new(HRP.Position.X, 5000, HRP.Position.Z) end)
         end
     end
 end)
@@ -384,66 +390,50 @@ end)
 local espCache = {}
 task.spawn(function()
     while task.wait(0.3) do
-        for _, p in pairs(Players:GetPlayers()) do
+        for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LP then
-                if S.ESP then
-                    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        if not espCache[p] or not espCache[p].Parent then
-                            local hl = Instance.new("Highlight")
-                            hl.FillColor = Color3.fromRGB(255, 40, 40)
-                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                            hl.FillTransparency = 0.5
-                            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                            hl.Parent = p.Character.HumanoidRootPart
-                            espCache[p] = hl
-                        end
+                if S.ESP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    if not espCache[p] or not espCache[p].Parent then
+                        local hl = Instance.new("Highlight")
+                        hl.FillColor = Color3.fromRGB(255, 40, 40)
+                        hl.OutlineColor = Color3.new(1,1,1)
+                        hl.FillTransparency = 0.5
+                        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        hl.Parent = p.Character.HumanoidRootPart
+                        espCache[p] = hl
                     end
-                else
-                    if espCache[p] then
-                        espCache[p]:Destroy()
-                        espCache[p] = nil
-                    end
+                elseif espCache[p] then
+                    espCache[p]:Destroy()
+                    espCache[p] = nil
                 end
-            end
-        end
-        -- limpa cache de players que saíram
-        for p, hl in pairs(espCache) do
-            if not p.Parent or not hl.Parent then
-                if hl then hl:Destroy() end
-                espCache[p] = nil
             end
         end
     end
 end)
 
--- TELEPORT (segue mouse)
+-- TELEPORT
 task.spawn(function()
     while task.wait(0.15) do
         if S.Teleport and HRP then
             pcall(function()
-                local mouse = LP:GetMouse()
-                if mouse and mouse.Hit then
-                    HRP.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
+                local m = LP:GetMouse()
+                if m and m.Hit then
+                    HRP.CFrame = CFrame.new(m.Hit.Position + Vector3.new(0, 3, 0))
                 end
             end)
         end
     end
 end)
 
--- =====================================================
---  RESPAWN HANDLER
--- =====================================================
+-- RESPAWN
 LP.CharacterAdded:Connect(function(c)
     Char = c
     HRP  = c:WaitForChild("HumanoidRootPart")
     Hum  = c:WaitForChild("Humanoid")
     task.wait(1)
-    MuscleEvent = LP:FindFirstChild("MuscleEvent")
-              or c:FindFirstChild("MuscleEvent")
-    if S.Speed and Hum then
-        Hum.WalkSpeed = 100
-    end
+    MuscleEvent = findRemote({"muscle", "punch", "hit", "attack", "remote"})
+    if S.Speed and Hum then Hum.WalkSpeed = 100 end
 end)
 
--- =====================================================
-print("✅ Clan CLZ Script | By: MITO carregado com sucesso!")
+print("✅ Clan CLZ Script | By: MITO v2 carregado!")
+print("MuscleEvent:", MuscleEvent and MuscleEvent:GetFullName() or "❌ NÃO ACHOU")
