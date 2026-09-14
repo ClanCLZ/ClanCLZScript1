@@ -10,9 +10,7 @@ if game.PlaceId ~= 155615604 then
     return 
 end
 
-local redzlib = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/2581235867/21/refs/heads/main/By%20Tokattk"
-))()
+local redzlib = loadstring(game:HttpGet("https://github.com/MITORYAN/scriptmusclelegendstest1/blob/main/README.md"))()
 
 local Window = redzlib:MakeWindow({
     Title = "CLAN CLZ",
